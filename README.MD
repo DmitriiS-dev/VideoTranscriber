@@ -13,10 +13,10 @@
 ### Spring Boot DevTools
 - Provides tools for faster application restarts, LiveReload, and an enhanced development experience.
 
-### Spring Data JPA
+### Spring Data JPA (Unused)
 - Simplifies data persistence in SQL databases using the Java Persistence API (JPA) and Hibernate.
 
-### Spring Data JDBC
+### Spring Data JDBC (Unused)
 - Offers a simpler approach to interacting with SQL databases using plain JDBC.
 
 ### Spring Security

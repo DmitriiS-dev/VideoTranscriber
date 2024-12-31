@@ -1,5 +1,6 @@
 package com.videoTranscriber.demo;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,19 +17,23 @@ import java.nio.file.Paths;
 @RequestMapping("/api/videos-upload")
 public class Controller {
 
+    @Autowired
+    private ProcessingService processingService;
+
+    @Autowired
+    private FileService fileService;
+
     @PostMapping
-    public ResponseEntity<String> uploadVideos(@RequestParam("file")MultipartFile file) throws IOException {
-//        save the file to a directory:
-        Path uploadDir = Paths.get("uploads");
+    public ResponseEntity<String> uploadVideos(@RequestParam("file")MultipartFile file) throws IOException, InterruptedException {
+        String uploadDir = "uploads";
 
-        if(!Files.exists(uploadDir)){
-            Files.createDirectories(uploadDir);
-        }
+//      Save the Video File and Retrieve the File Path:
+        var videoFilePath = fileService.saveFile(file, uploadDir);
 
-        Path filePath = uploadDir.resolve(file.getOriginalFilename());
-        Files.write(filePath,file.getBytes());
+//      Extract the Audio from the uploaded Video:
+        String audioFilePath = processingService.extractAudio(videoFilePath.toString(), "uploads");
 
 
-        return ResponseEntity.ok("Video Was Successfully Uploaded");
+        return ResponseEntity.ok("Audio Was Successfully Extracted "+ audioFilePath);
     }
 }

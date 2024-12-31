@@ -9,6 +9,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,7 +38,27 @@ class VideoTranscriberApplicationTests {
 				.file(videoFile)
 				.with(SecurityMockMvcRequestPostProcessors.csrf()))
 				.andExpect(status().isOk());
+	}
 
+	@Test
+	@WithMockUser
+	void shouldSaveUploadedFileToSystem() throws Exception{
+		MockMultipartFile videoFile = new MockMultipartFile(
+				"file",
+				"test-video.mp4",
+				"video/mp4",
+				"dummy video content".getBytes()
+		);
+
+		mockMvc.perform(multipart("/api/videos-upload")
+				.file(videoFile)
+				.with(SecurityMockMvcRequestPostProcessors.csrf()))
+				.andExpect(status().isOk());
+
+		Path savedFilePath = Paths.get("uploads/test-video.mp4");
+		assertTrue(Files.exists(savedFilePath));
+
+		Files.delete(savedFilePath);
 	}
 
 }

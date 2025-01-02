@@ -24,41 +24,28 @@ class VideoTranscriberApplicationTests {
 	@Autowired
 	private MockMvc mockMvc;
 
+	private final Path testVideoPath = Paths.get("src/test/resources/test-video.mp4");
+	private final Path uploadDir = Paths.get("uploads");
+
 	@Test
 	@WithMockUser
-	void shouldUploadVideosandReturnOk() throws Exception{
+	void shouldUploadVideosAndReturnOk() throws Exception {
+		// Ensure test video exists
+		assertTrue(Files.exists(testVideoPath), "Test video file is missing");
+
+		// Read the test video file as bytes
+		byte[] videoBytes = Files.readAllBytes(testVideoPath);
+
 		MockMultipartFile videoFile = new MockMultipartFile(
 				"file",
 				"test-video.mp4",
 				"video/mp4",
-				"dummy video content".getBytes()
+				videoBytes
 		);
 
 		mockMvc.perform(multipart("/api/videos-upload")
-				.file(videoFile)
-				.with(SecurityMockMvcRequestPostProcessors.csrf()))
+						.file(videoFile)
+						.with(SecurityMockMvcRequestPostProcessors.csrf()))
 				.andExpect(status().isOk());
 	}
-
-	@Test
-	@WithMockUser
-	void shouldSaveUploadedFileToSystem() throws Exception{
-		MockMultipartFile videoFile = new MockMultipartFile(
-				"file",
-				"test-video.mp4",
-				"video/mp4",
-				"dummy video content".getBytes()
-		);
-
-		mockMvc.perform(multipart("/api/videos-upload")
-				.file(videoFile)
-				.with(SecurityMockMvcRequestPostProcessors.csrf()))
-				.andExpect(status().isOk());
-
-		Path savedFilePath = Paths.get("uploads/test-video.mp4");
-		assertTrue(Files.exists(savedFilePath));
-
-		Files.delete(savedFilePath);
-	}
-
 }

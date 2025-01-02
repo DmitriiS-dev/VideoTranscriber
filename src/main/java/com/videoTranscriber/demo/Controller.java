@@ -24,7 +24,7 @@ public class Controller {
     private FileService fileService;
 
     @PostMapping
-    public ResponseEntity<String> uploadVideos(@RequestParam("file")MultipartFile file) throws IOException, InterruptedException {
+    public ResponseEntity<String> uploadVideos(@RequestParam("file")MultipartFile file) throws Exception {
         String uploadDir = "uploads";
 
 //      Save the Video File and Retrieve the File Path:

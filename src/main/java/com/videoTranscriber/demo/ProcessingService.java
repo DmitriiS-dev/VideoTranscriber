@@ -40,10 +40,23 @@ public class ProcessingService {
             throw new IOException("No write permissions for the output directory: " + outputDirectory);
         }
 
-        // Simulate audio extraction
-        String audioFileName = fileName.substring(0, fileName.lastIndexOf('.')) + ".mp3";
+        // Extract the Audio:
+        String audioFileName = fileName.substring(0, fileName.lastIndexOf('.'))+".mp3";
         Path audioFilePath = outputDirPath.resolve(audioFileName);
-        Files.createFile(audioFilePath); // Simulate the audio file creation for the test
+
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                "ffmpeg", "-i", videoPath.toString(), "-vn", "-acodec", "libmp3lame", audioFilePath.toString()
+        );
+
+        processBuilder.inheritIO();
+
+        Process process = processBuilder.start();
+        int exitCode = process.waitFor();
+
+        if (exitCode != 0){
+            throw new IOException("FFmpeg failed to extract audio. "+ exitCode);
+        }
+
 
         return audioFilePath.toString();
     }

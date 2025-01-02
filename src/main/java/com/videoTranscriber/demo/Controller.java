@@ -33,6 +33,11 @@ public class Controller {
 //      Extract the Audio from the uploaded Video:
         String audioFilePath = processingService.extractAudio(videoFilePath.toString(), "uploads");
 
+        // Convert audio and transcribe to text:
+        Path convertedAudioPath = fileService.convertMp3ToLinear16(audioFilePath, Path.of(uploadDir));
+
+
+
 
         return ResponseEntity.ok("Audio Was Successfully Extracted "+ audioFilePath);
     }

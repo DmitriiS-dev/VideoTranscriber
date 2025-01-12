@@ -3,7 +3,7 @@
 ## Stack: 
 ### Front-end: React.js
 ### Back-end: Spring Java, JUnit5 and Mochito
-### Integration: Groq API
+### Integration: Groq API, Google Cloud API
 
 ## Java Spring Backend Initializer Libraries:
 

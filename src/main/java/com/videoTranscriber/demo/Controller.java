@@ -14,63 +14,92 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/api/videos-upload")
 public class Controller {
 
     @Autowired
-    private ProcessingService processingService;
+    private ExtractAudioService processingService;
 
     @Autowired
-    private FileService fileService;
+    private SaveAsFileService saveAsFileService;
 
     @Autowired
-    private AudioTranscriber audioTranscriber;
+    private AudioStorageService audioStorageService;
+
+    @Autowired
+    private TranscribeAudioService transcribeAudioService;
 
     private final Storage storage;
 
-    @Value("${gcs.audio-transcription-bucket-project")
+    @Value("${gcs.audio-transcription-bucket-project}")
     private String bucketName;
-    public Controller(){
+    public Controller() {
         this.storage = StorageOptions.getDefaultInstance().getService();
     }
-    @PostMapping("/uploadFile")
-    public ResponseEntity<String> uploadVideos(@RequestParam("file")MultipartFile file) throws Exception {
+
+    /**
+     * API: Transcribes File From a Video File:
+     */
+    @PostMapping("/pathToText")
+    public ResponseEntity<String> pathToText(@RequestParam("file") MultipartFile file) throws Exception {
         String uploadDir = "uploads";
 
-//      Step 1: Save the video file and retrieve the file path
-        var videoFilePath = fileService.saveFile(file, uploadDir);
+        try {
+            // Step 1: Save the video file and retrieve the file path
+            Path videoFilePath = saveAsFileService.saveFile(file, uploadDir);
 
-//      Step 2: Extract the audio from the uploaded video
-        String audioFilePath = processingService.extractAudio(videoFilePath.toString(), "uploads");
-
-        // Step 3: Convert MP3 to Linear16 WAV format (if needed)
-        Path convertedAudioPath = fileService.convertMp3ToLinear16(audioFilePath, Path.of(uploadDir));
-
-        // Step 4: Transcribe the audio file
-        String transcription = audioTranscriber.transcribeAudio(convertedAudioPath.toString());
+            // Step 2: Extract the audio from the uploaded video
+            String audioFilePath = processingService.extractAudio(videoFilePath.toString(), uploadDir);
 
 
+            // Step 3: Convert MP3 to Linear16 WAV format
+            Path convertedAudioPath = saveAsFileService.convertMp3ToLinear16(audioFilePath, Path.of(uploadDir));
 
-        return ResponseEntity.ok("Transcribed Text from the audio file "+ transcription);
+            // Step 4: Upload the WAV file to GCS and get the URI
+            URI gcsUri = audioStorageService.uploadAudio(convertedAudioPath, bucketName);
+
+            // Step 5: Transcribe the audio file and retrieve the text
+            String transcription = transcribeAudioService.TranscribeFile(gcsUri);
+
+            // Step 6: Clean up temporary files
+            Files.deleteIfExists(convertedAudioPath);
+            Files.deleteIfExists(Path.of(audioFilePath));
+            Files.deleteIfExists(videoFilePath);
+
+
+            // Return the transcribed text
+            return ResponseEntity.ok("Transcribed Text: " + transcription);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error occurred: " + e.getMessage());
+        }
     }
 
-//    Send a URL:
+    /**
+     * API: Transcribes File From a URL:
+     */
     @PostMapping("uploadURL")
     public ResponseEntity<String> uploadURL(@RequestParam("url")String url) throws Exception{
 
-//        Send it over to the Transcribe Audio File:
-        String transcription = audioTranscriber.transcribeYouTubeAudio(url);
+        // Step 1: Download the Audio of the Video inside the URL
 
-        return ResponseEntity.ok("Transcribed URL "+transcription);
+        // Step 2: Convert MP3 to Linear16 WAV format (if needed)
+
+        // Step 3: Upload the Audio File to GCS and get the URI
+
+        // Step 5: Transcribe the audio file and retrieve the text:
+
+        // Step 6 Clean Up - remove all the unused files - mp3, wav and audio
+
+        return ResponseEntity.ok("Transcribed URL ");
     }
 
-
     /**
-     * New API: Upload files directly to Google Cloud Storage.
+     * API: Uploads files directly to Google Cloud Storage.
      */
+
     @PostMapping("/uploadToGCS")
     public ResponseEntity<String> uploadToGCS(@RequestParam("file") MultipartFile file) {
         try {

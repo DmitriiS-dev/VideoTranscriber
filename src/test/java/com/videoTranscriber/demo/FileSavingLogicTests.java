@@ -1,6 +1,6 @@
-package com.videoTranscriber.demo.tests;
+package com.videoTranscriber.demo;
 
-import com.videoTranscriber.demo.FileService;
+import com.videoTranscriber.demo.SaveAsFileService;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class FileSavingLogicTests {
 
-    private final FileService fileService = new FileService();
+    private final SaveAsFileService saveAsFileService = new SaveAsFileService();
 
     @Test
     void shouldSaveUploadedFile() throws Exception {
@@ -23,7 +23,7 @@ public class FileSavingLogicTests {
                 "dummy video content".getBytes()
         );
 
-        Path savedFilePath = fileService.saveFile(mockFile, "uploads");
+        Path savedFilePath = saveAsFileService.saveFile(mockFile, "uploads");
 
         assertTrue(Files.exists(savedFilePath));
 
@@ -41,7 +41,7 @@ public class FileSavingLogicTests {
         );
 
         assertThrows(Exception.class, () -> {
-            fileService.saveFile(emptyFile, "uploads");
+            saveAsFileService.saveFile(emptyFile, "uploads");
         });
     }
 
@@ -55,7 +55,7 @@ public class FileSavingLogicTests {
         );
 
         assertThrows(Exception.class, () -> {
-            fileService.saveFile(mockFile, "invalid/uploads");
+            saveAsFileService.saveFile(mockFile, "invalid/uploads");
         });
     }
 
@@ -69,7 +69,7 @@ public class FileSavingLogicTests {
         );
 
         assertThrows(Exception.class, () -> {
-            fileService.saveFile(unsupportedFile, "uploads");
+            saveAsFileService.saveFile(unsupportedFile, "uploads");
         });
     }
 
@@ -85,7 +85,7 @@ public class FileSavingLogicTests {
         );
 
         assertThrows(Exception.class, () -> {
-            fileService.saveFile(largeFile, "uploads");
+            saveAsFileService.saveFile(largeFile, "uploads");
         });
     }
 
@@ -100,7 +100,7 @@ public class FileSavingLogicTests {
         );
 
         assertThrows(Exception.class, () -> {
-            fileService.saveFile(invalidContentFile, "uploads");
+            saveAsFileService.saveFile(invalidContentFile, "uploads");
         });
     }
 }

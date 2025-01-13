@@ -1,9 +1,8 @@
-package com.videoTranscriber.demo.tests;
+package com.videoTranscriber.demo;
 
-import com.videoTranscriber.demo.ProcessingService;
+import com.videoTranscriber.demo.ExtractAudioService;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class VideoProcessingServiceTests {
 
-    private final ProcessingService processingService = new ProcessingService();
+    private final ExtractAudioService processingService = new ExtractAudioService();
 
     @Test
     void shouldExtractAudioFromVideo() throws Exception {

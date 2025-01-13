@@ -11,8 +11,12 @@ import java.nio.file.Paths;
 
 
 @Service
-public class FileService {
+public class SaveAsFileService {
 
+
+    /**
+     * Saves the Uploaded File and retrieves the path:
+     */
     public Path saveFile(MultipartFile file, String directory) throws IOException {
 
 //        Ensures file is not empty:
@@ -42,7 +46,9 @@ public class FileService {
         return filePath;
     }
 
-//    Converts mp3 files into (WAV) - LINEAR16
+    /**
+     * Converts mp3 files into (WAV) - LINEAR16
+     */
     public Path convertMp3ToLinear16(String mp3FilePath, Path uploadDir) throws IOException, InterruptedException {
 //        Output WAV file:
         String outputFilePath = mp3FilePath.replace(".mp3", "-converted.wav");
@@ -69,7 +75,5 @@ public class FileService {
         }
 
         return outputPath;
-
-
     }
 }

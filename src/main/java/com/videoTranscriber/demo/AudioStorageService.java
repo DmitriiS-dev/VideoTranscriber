@@ -11,7 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URI;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Service
 public class AudioStorageService {
@@ -24,20 +25,20 @@ public class AudioStorageService {
         this.storage = StorageOptions.getDefaultInstance().getService();
     }
 
-
-    public URI uploadAudio(MultipartFile file, String bucketName) throws IOException {
-        if (file.isEmpty() || !file.getOriginalFilename().endsWith(".wav")) {
+    public URI uploadAudio(Path filePath, String bucketName) throws IOException {
+        if (!Files.exists(filePath) || !filePath.toString().endsWith(".wav")) {
             throw new IllegalArgumentException("Invalid file. Please upload a valid WAV audio file.");
         }
 
-        String fileName = file.getOriginalFilename();
+        String fileName = filePath.getFileName().toString();
 
         // Define the blob ID and metadata
         BlobId blobId = BlobId.of(bucketName, fileName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("audio/wav").build();
 
-        // Upload the file
-        Blob blob = storage.create(blobInfo, file.getBytes());
+        // Read file bytes and upload the file
+        byte[] fileBytes = Files.readAllBytes(filePath);
+        Blob blob = storage.create(blobInfo, fileBytes);
 
         // Return the public URI
         return URI.create(String.format("https://storage.googleapis.com/%s/%s", bucketName, fileName));

@@ -2,15 +2,17 @@ package com.videoTranscriber.demo;
 
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Service
-public class ProcessingService {
+public class ExtractAudioService {
 
+    /**
+     * Extracts the Audio from the downloaded file:
+     */
     public String extractAudio(String videoFilePath, String outputDirectory) throws Exception {
         // Validate video file existence
         Path videoPath = Paths.get(videoFilePath);

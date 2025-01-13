@@ -23,7 +23,7 @@ public class Controller {
     private ExtractAudioService processingService;
 
     @Autowired
-    private SaveAsFileService saveAsFileService;
+    private FileManipulationServices fileManipulationServices;
 
     @Autowired
     private AudioStorageService audioStorageService;
@@ -32,6 +32,8 @@ public class Controller {
     private TranscribeAudioService transcribeAudioService;
 
     private final Storage storage;
+
+    private final String uploadDir = "uploads";
 
     @Value("${gcs.audio-transcription-bucket-project}")
     private String bucketName;
@@ -44,18 +46,16 @@ public class Controller {
      */
     @PostMapping("/pathToText")
     public ResponseEntity<String> pathToText(@RequestParam("file") MultipartFile file) throws Exception {
-        String uploadDir = "uploads";
 
         try {
             // Step 1: Save the video file and retrieve the file path
-            Path videoFilePath = saveAsFileService.saveFile(file, uploadDir);
+            Path videoFilePath = fileManipulationServices.saveFile(file, uploadDir);
 
             // Step 2: Extract the audio from the uploaded video
             String audioFilePath = processingService.extractAudio(videoFilePath.toString(), uploadDir);
 
-
             // Step 3: Convert MP3 to Linear16 WAV format
-            Path convertedAudioPath = saveAsFileService.convertMp3ToLinear16(audioFilePath, Path.of(uploadDir));
+            Path convertedAudioPath = fileManipulationServices.convertMp3ToLinear16(audioFilePath, Path.of(uploadDir));
 
             // Step 4: Upload the WAV file to GCS and get the URI
             URI gcsUri = audioStorageService.uploadAudio(convertedAudioPath, bucketName);
@@ -80,20 +80,30 @@ public class Controller {
     /**
      * API: Transcribes File From a URL:
      */
-    @PostMapping("uploadURL")
+    @PostMapping("/urlToText")
     public ResponseEntity<String> uploadURL(@RequestParam("url")String url) throws Exception{
+        try{
+            // Step 1: Download the Audio of the Video inside the URL
+            Path audioFilePath = fileManipulationServices.downloadFile(url);
 
-        // Step 1: Download the Audio of the Video inside the URL
+            // Step 2: Convert MP3 to Linear16 WAV format (if needed)
+            Path convertedAudioPath = fileManipulationServices.convertMp3ToLinear16(audioFilePath.toString(), Path.of(uploadDir));
 
-        // Step 2: Convert MP3 to Linear16 WAV format (if needed)
+            // Step 3: Upload the Audio File to GCS and get the URI:
+            URI gcsUri = audioStorageService.uploadAudio(convertedAudioPath, bucketName);
 
-        // Step 3: Upload the Audio File to GCS and get the URI
+            // Step 5: Transcribe the audio file and retrieve the text:
+            String transcription = transcribeAudioService.TranscribeFile(gcsUri);
 
-        // Step 5: Transcribe the audio file and retrieve the text:
+            // Step 6 Clean Up - remove all the unused files - mp3, wav and audio
+            Files.deleteIfExists(convertedAudioPath);
+            Files.deleteIfExists(audioFilePath);
 
-        // Step 6 Clean Up - remove all the unused files - mp3, wav and audio
+            return ResponseEntity.ok("Transcribed Text: " + transcription);
 
-        return ResponseEntity.ok("Transcribed URL ");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error occurred: " + e.getMessage());
+        }
     }
 
     /**

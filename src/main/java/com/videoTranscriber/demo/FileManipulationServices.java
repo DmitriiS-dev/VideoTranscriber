@@ -5,13 +5,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 
 @Service
-public class SaveAsFileService {
+public class FileManipulationServices {
 
 
     /**
@@ -76,4 +79,58 @@ public class SaveAsFileService {
 
         return outputPath;
     }
+
+    /**
+     * Service to download the file as an audio:
+     */
+    public Path downloadFile(String url) throws Exception {
+        // Validate the URL
+        if (url == null || url.isEmpty() || !url.startsWith("https://www.youtube.com")) {
+            throw new IllegalArgumentException("Invalid URL provided: " + url);
+        }
+
+        // Ensure the download directory exists
+        Path downloadDir = Paths.get("uploads");
+        if (!Files.exists(downloadDir)) {
+            Files.createDirectories(downloadDir);
+        }
+
+        // Output file path
+        String outputFilePath = downloadDir.resolve("downloaded_audio.mp3").toString();
+
+        // Check if yt-dlp is available
+        try {
+            Process ytDlpCheck = new ProcessBuilder("yt-dlp", "--version").start();
+            if (ytDlpCheck.waitFor() != 0) {
+                throw new IOException("yt-dlp is not installed or not available in PATH.");
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new IOException("Failed to verify yt-dlp installation.", e);
+        }
+
+        // Construct the yt-dlp command
+        List<String> command = Arrays.asList(
+                "yt-dlp", "-x", "--audio-format", "mp3", "-o", outputFilePath, url
+        );
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+
+        // Redirect error stream for better debugging
+        processBuilder.redirectErrorStream(true);
+
+        // Start the process
+        Process process = processBuilder.start();
+
+        // Capture process output for debugging
+        String errors = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+        // Wait for the process to complete
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            throw new IOException("yt-dlp failed with exit code " + exitCode + ". Output: " + errors);
+        }
+
+        // Return the path of the downloaded file
+        return Paths.get(outputFilePath);
+    }
+
 }
